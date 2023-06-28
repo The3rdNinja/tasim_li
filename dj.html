@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>DJ Song List</title>
+  <link rel="stylesheet" type="text/css" href="./dj.css">
+  <style>
+    /* Additional CSS styles for centering the form */
+    #form-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh; /* Adjust the height to center the form vertically */
+    }
+  
+    .song-input {
+      margin-bottom: 10px;
+      position: relative;
+    }
+  
+    .delete-icon {
+      position: absolute;
+      top: 50%;
+      right: 5px;
+      transform: translateY(-50%);
+      cursor: pointer;
+    }
+  
+    .form-button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+  
+    .form-button:hover {
+      background-color: #45a049;
+    }
+  
+    #submit-btn {
+      margin-top: 20px; /* Add margin to create space between the inputs and the button */
+    }
+
+    .button-container {
+      display: flex;
+      gap: 10px;
+    }
+
+    .data-text {
+  text-align: center;
+  margin-top: 50px;
+  font-family: Arial, sans-serif;
+  background-color: #f2f2f2;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.data-heading {
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.data-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.data-item {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.data-item:first-child {
+  margin-top: 0;
+}
+
+.data-item:last-child {
+  margin-bottom: 0;
+}
+
+  </style>
+</head>
+<body>
+    <h1>DJ Song List</h1>
+    <div id="data_text" class="data-text">
+        <h2 class="data-heading">Voting Results</h2>
+        <ul id="data_list" class="data-list"></ul>
+      </div>      
+  <div id="form-container">
+    <label for="password">Password:</label>
+    <input type="password" id="password">
+  
+    <label for="kid-name">Kid's Name:</label>
+    <input type="text" id="kid-name">
+  
+    <div id="song-input-container">
+      <div class="song-input">
+        <label for="song1">Song 1:</label>
+        <input type="text" class="song">
+        <i class="delete-icon" onclick="deleteSongInput(this)">&times;</i>
+      </div>
+    </div>
+  
+    <div class="button-container">
+      <button onclick="addSongInput()" class="form-button">Add Song</button>
+      <button onclick="addTimeoutInput()" class="form-button">Add Timeout</button>
+    </div>
+  
+    <button onclick="submitForm()" id="submit-btn">Submit</button>
+    <button onclick="startTimer()" class="form-button">Start</button>
+  </div>
+  
+  <script>
+    var songCount = 1;
+    var timeoutCount = 0;
+    var songs = [];
+    var timeouts = [];
+
+    function addSongInput() {
+      songCount++;
+
+      var songInputContainer = document.getElementById('song-input-container');
+      var newSongInput = document.createElement('div');
+      newSongInput.classList.add('song-input');
+      newSongInput.innerHTML = `
+        <label for="song${songCount}">Song ${songCount}:</label>
+        <input type="text" class="song">
+        <i class="delete-icon" onclick="deleteSongInput(this)">&times;</i>
+      `;
+
+      songInputContainer.appendChild(newSongInput);
+    }
+
+    function addTimeoutInput() {
+      timeoutCount++;
+
+      var songInputContainer = document.getElementById('song-input-container');
+      var newTimeoutInput = document.createElement('div');
+      newTimeoutInput.classList.add('song-input');
+      newTimeoutInput.innerHTML = `
+        <label for="timeout${timeoutCount}">Timeout ${timeoutCount}:</label>
+        <input type="text" class="song" onchange="updateTimeoutValue(this)">
+        <i class="delete-icon" onclick="deleteSongInput(this)">&times;</i>
+      `;
+
+      songInputContainer.appendChild(newTimeoutInput);
+    }
+
+    function updateTimeoutValue(inputElement) {
+      var timeout = inputElement.value.trim();
+      if (timeout !== '') {
+        var timeoutValue = 'timeout:' + timeout;
+        inputElement.value = timeoutValue;
+      }
+    }
+
+    function deleteSongInput(deleteIcon) {
+      var songInput = deleteIcon.parentNode;
+      songInput.parentNode.removeChild(songInput);
+    }
+
+    function submitForm() {
+      var password = document.getElementById('password').value;
+      var kidName = document.getElementById('kid-name').value;
+      var songInputs = document.getElementsByClassName('song');
+
+      if (password !== '1234') {
+        console.log('Wrong password');
+        return;
+      }
+
+      // Reset the songs and timeouts arrays
+      songs = [];
+      timeouts = [];
+
+      // Loop through the input elements and add non-empty values to the songs or timeouts arrays
+      for (var i = 0; i < songInputs.length; i++) {
+        var songValue = songInputs[i].value.trim();
+        if (songValue.startsWith('timeout:')) {
+          timeouts.push(songValue);
+        } else if (songValue !== '') {
+          songs.push(songValue);
+        }
+      }
+
+      var songList = [];
+      var songIndex = 0;
+      var timeoutIndex = 0;
+
+      var songsPerTimeout = Math.ceil(songs.length / timeouts.length);
+
+      // Merge the songs and timeouts arrays in the correct order
+      while (songIndex < songs.length && timeoutIndex < timeouts.length) {
+        for (var j = 0; j < songsPerTimeout; j++) {
+          if (songIndex < songs.length) {
+            songList.push(songs[songIndex]);
+            songIndex++;
+          }
+        }
+        if (timeoutIndex < timeouts.length) {
+          songList.push(timeouts[timeoutIndex]);
+          timeoutIndex++;
+        }
+      }
+
+      // Add remaining songs if any
+      while (songIndex < songs.length) {
+        songList.push(songs[songIndex]);
+        songIndex++;
+      }
+
+      // Add remaining timeouts if any
+      while (timeoutIndex < timeouts.length) {
+        songList.push(timeouts[timeoutIndex]);
+        timeoutIndex++;
+      }
+
+      console.log('Kid\'s Name:', kidName);
+      console.log('Song List:', songList);
+
+      var data = {
+        kidName: kidName,
+        songList: songList
+      };
+
+      fetch('http://109.186.48.83:5000/list', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Server response:', data);
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    }
+
+    function startTimer() {
+      var data = {
+        command: 'start'
+      };
+
+      fetch('http://109.186.48.83:5000/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Server response:', data);
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    }
+
+    function update() {
+  var data = {
+    command: 'sito'
+  };
+
+  fetch('http://109.186.48.83:5000/sito', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Server response:', data);
+      var listElement = document.getElementById('data_list');
+      listElement.innerHTML = '';
+
+      if (data.length === 0) {
+        listElement.innerHTML = 'No data available';
+        return;
+      }
+
+      data.forEach(item => {
+        var listItem = document.createElement('li');
+        listItem.textContent = item;
+        listItem.classList.add('data-item');
+        listElement.appendChild(listItem);
+      });
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+}
+
+
+    setInterval(update, 1000)
+  </script>
+</body>
+</html>
